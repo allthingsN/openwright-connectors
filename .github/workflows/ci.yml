@@ -59,26 +59,45 @@ jobs:
           for p in packages/*; do pip install "$p"; done  # includes _template (openwright_template)
       - run: lint-imports
 
-  # Self-hosted combined coverage badge (no external service): one coverage run over
-  # all packages → an SVG published to an orphan 'badges' branch (README points at raw SVG).
-  coverage-badge:
+  # Self-hosted combined coverage (no external service): one coverage run over all
+  # packages → coverage.xml uploaded as an artifact for the badge job to consume.
+  coverage:
     needs: [test, decoupling-guard]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Combined coverage over all packages
         run: |
-          python -m pip install --upgrade pip pytest pytest-cov "genbadge[coverage]"
+          python -m pip install --upgrade pip pytest pytest-cov
           pip install "openwright-core>=0.6,<0.8" ./conformance
           for p in packages/*; do pip install -e "$p[test]" || pip install -e "$p"; done
           pytest packages/*/tests --cov=packages --cov-report=xml --cov-report=term-missing -q
           coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
-          genbadge coverage -i coverage.xml -o coverage.svg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-connectors
+          path: coverage.xml
+
+  # Publish the badge from a CLEAN checkout (only the downloaded coverage.xml present),
+  # so `git switch --orphan badges` never collides with a dirty build tree.
+  coverage-badge:
+    needs: coverage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-connectors
+          path: cov
+      - run: |
+          python -m pip install "genbadge[coverage]"
+          genbadge coverage -i cov/coverage.xml -o coverage.svg
       - name: Publish badge to 'badges' branch
         run: |
           git config user.name "github-actions[bot]"
