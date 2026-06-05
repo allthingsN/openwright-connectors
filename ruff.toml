@@ -1,0 +1,9 @@
+line-length = 110
+target-version = "py310"
+
+[lint]
+# pyflakes (real bugs) + pycodestyle E7/E9; low-noise (no E501 / import-order).
+select = ["E7", "E9", "F"]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["E402"]

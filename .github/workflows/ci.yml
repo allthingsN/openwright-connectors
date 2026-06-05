@@ -3,6 +3,15 @@ name: ci
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install ruff
+      - run: ruff check .
+
   # REPO-3: every connector tested against the MIN and LATEST supported core.
   test:
     runs-on: ubuntu-latest
@@ -17,19 +26,32 @@ jobs:
           - openwright-github-action
           - openwright-openai-agents
           - _template
-        core: ["==0.6.0", ">=0.6,<0.7"]  # min and latest of the supported range
+        core: ["==0.6.0", ">=0.6,<0.8"]  # min and latest of the supported range
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Install core (${{ matrix.core }}), conformance harness, and the package
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip pytest-cov
           pip install "openwright-core${{ matrix.core }}"
           pip install ./conformance
-          pip install "./packages/${{ matrix.package }}[test]"
-      - name: Conformance + package tests
-        run: pytest "packages/${{ matrix.package }}/tests" -q
+          pip install -e "./packages/${{ matrix.package }}[test]"   # -e so coverage maps to src/
+      - name: Conformance + package tests (+ coverage)
+        run: pytest "packages/${{ matrix.package }}/tests" --cov="packages/${{ matrix.package }}/src" --cov-report=xml --cov-report=term-missing -q
+      - name: Publish coverage to Codecov
+        if: matrix.core == '>=0.6,<0.8'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: ${{ matrix.package }}
+          fail_ci_if_error: false
+      - name: Upload coverage artifact
+        if: matrix.core == '>=0.6,<0.8'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.package }}
+          path: coverage.xml
 
   # REPO-4: decoupling guard — a connector must not import another connector.
   decoupling-guard:
@@ -40,6 +62,6 @@ jobs:
         with: { python-version: "3.12" }
       - run: |
           python -m pip install --upgrade pip
-          pip install "openwright-core>=0.6,<0.7" import-linter ./conformance
+          pip install "openwright-core>=0.6,<0.8" import-linter ./conformance
           for p in packages/*; do pip install "$p"; done  # includes _template (openwright_template)
       - run: lint-imports
