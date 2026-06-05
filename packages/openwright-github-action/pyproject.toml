@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-github-action"
+version = "0.4.0"
+description = "GitHub-CI evidence-gate exporter for OpenWright — shift-left control gating + SARIF."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "github-action", "ci", "sarif", "gate", "evidence"]
+dependencies = ["openwright-core>=0.6,<0.8"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance"]
+
+[project.entry-points."openwright.report_exporters"]
+github = "openwright_github:exporter"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_github"]

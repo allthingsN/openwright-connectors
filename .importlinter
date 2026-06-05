@@ -1,0 +1,24 @@
+[importlinter]
+root_packages =
+    openwright_langgraph
+    openwright_langfuse
+    openwright_postgres
+    openwright_s3
+    openwright_github
+    openwright_openai_agents
+    openwright_template
+include_external_packages = True
+
+# Decoupling guard (REPO-4): a connector must never import another connector.
+# Connectors depend on core (openwright / openwright.connectors) only — never on
+# each other. Run with `lint-imports` after installing all packages.
+[importlinter:contract:connectors-independent]
+name = Connectors must not import one another
+type = independence
+modules =
+    openwright_langgraph
+    openwright_langfuse
+    openwright_postgres
+    openwright_s3
+    openwright_github
+    openwright_openai_agents

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-openai-agents"
+version = "0.4.0"
+description = "OpenAI Agents SDK source connector for OpenWright — capture agent runs, tools, handoffs, and approvals as evidence."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "openai-agents", "agents", "evidence", "eu-ai-act"]
+dependencies = ["openwright-core>=0.6,<0.8"]
+
+[project.optional-dependencies]
+sdk = ["openai-agents>=0.0.1"]
+test = ["pytest>=8", "openwright-conformance"]
+
+[project.entry-points."openwright.source_connectors"]
+openai_agents = "openwright_openai_agents:connector"
+
+# one-line integration: `openwright.instrument("openai-agents")` (core >= 0.7)
+[project.entry-points."openwright.instrumentors"]
+openai-agents = "openwright_openai_agents:auto_instrument"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_openai_agents"]

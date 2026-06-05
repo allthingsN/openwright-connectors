@@ -1,0 +1,34 @@
+name: release
+
+# Per-package release (REPO-2). Tag a package independently as
+# "<package>-v<version>" (e.g. openwright-postgres-v0.2.0) to publish just it to
+# PyPI via OIDC trusted publishing (no API token). Each package must have a PyPI
+# trusted publisher configured for owner allthingsN, repo openwright-connectors,
+# workflow release.yml, environment pypi.
+on:
+  push:
+    tags: ["*-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # OIDC — keyless trusted publishing
+      contents: read    # job-level permissions replace the workflow default, so checkout needs this restated
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Resolve the package directory from the tag
+        id: pkg
+        run: |
+          name="${GITHUB_REF_NAME%-v*}"          # openwright-postgres-v0.1.0 -> openwright-postgres
+          test -d "packages/$name" || { echo "no package packages/$name for tag $GITHUB_REF_NAME"; exit 1; }
+          echo "dir=packages/$name" >> "$GITHUB_OUTPUT"
+      - run: pip install build
+      - run: python -m build "${{ steps.pkg.outputs.dir }}" --outdir dist
+      - uses: pypa/gh-action-pypi-publish@release/v1

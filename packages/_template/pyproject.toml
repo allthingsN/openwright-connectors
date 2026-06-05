@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Copy this directory to packages/openwright-<name> to start a new connector.
+# Rename the package, set the right entry-point group, implement the contract,
+# and make `pytest` (the conformance harness) pass before you ship.
+[project]
+name = "openwright-template"
+version = "0.0.0"
+description = "Template OpenWright connector — copy to start a new one."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+dependencies = ["openwright-core>=0.6,<0.7"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance"]
+
+# Declare the connector's entry point in the group it targets. Groups:
+#   openwright.source_connectors | openwright.forwarders | openwright.report_exporters
+#   openwright.ledger_backends   | openwright.checkpoint_stores
+[project.entry-points."openwright.report_exporters"]
+template = "openwright_template:connector"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_template"]

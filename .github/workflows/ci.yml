@@ -1,0 +1,45 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  # REPO-3: every connector tested against the MIN and LATEST supported core.
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - openwright-langgraph
+          - openwright-langfuse
+          - openwright-postgres
+          - openwright-s3
+          - openwright-github-action
+          - openwright-openai-agents
+          - _template
+        core: ["==0.6.0", ">=0.6,<0.7"]  # min and latest of the supported range
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install core (${{ matrix.core }}), conformance harness, and the package
+        run: |
+          python -m pip install --upgrade pip
+          pip install "openwright-core${{ matrix.core }}"
+          pip install ./conformance
+          pip install "./packages/${{ matrix.package }}[test]"
+      - name: Conformance + package tests
+        run: pytest "packages/${{ matrix.package }}/tests" -q
+
+  # REPO-4: decoupling guard — a connector must not import another connector.
+  decoupling-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          python -m pip install --upgrade pip
+          pip install "openwright-core>=0.6,<0.7" import-linter ./conformance
+          for p in packages/*; do pip install "$p"; done  # includes _template (openwright_template)
+      - run: lint-imports

@@ -1,0 +1,43 @@
+name: "OpenWright evidence gate"
+description: "Verify a signed OpenWright report offline and fail the build if required controls aren't satisfied; upload SARIF to code scanning."
+branding: { icon: "shield", color: "blue" }
+inputs:
+  report:
+    description: "Path to the signed report.json"
+    required: true
+  pubkey:
+    description: "Path to the signer's public key (PEM). Strongly recommended."
+    required: false
+    default: ""
+  require:
+    description: "Comma-separated control ids that MUST be satisfied (default: all)."
+    required: false
+    default: ""
+  sarif:
+    description: "Where to write SARIF gap findings."
+    required: false
+    default: "openwright.sarif.json"
+  version:
+    description: "openwright version spec to install."
+    required: false
+    default: ">=0.5,<0.6"
+runs:
+  using: composite
+  steps:
+    - name: Install OpenWright
+      shell: bash
+      run: pip install "openwright${{ inputs.version }}" openwright-github-action
+    - name: Verify report integrity (offline, --deep)
+      shell: bash
+      run: |
+        openwright verify "${{ inputs.report }}" ${{ inputs.pubkey != '' && format('--pubkey {0}', inputs.pubkey) || '' }} --deep
+    - name: Gate on required controls + write SARIF
+      shell: bash
+      run: |
+        openwright export "${{ inputs.report }}" --to github \
+          -c require="${{ inputs.require }}" -c sarif="${{ inputs.sarif }}"
+    - name: Upload SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: "${{ inputs.sarif }}"

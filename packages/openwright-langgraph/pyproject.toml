@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-langgraph"
+version = "0.4.0"
+description = "LangGraph source connector for OpenWright — capture agent decisions, tools, and human-in-the-loop approvals as evidence."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "langgraph", "langchain", "agents", "evidence", "eu-ai-act"]
+dependencies = ["openwright-core>=0.6,<0.8", "langgraph>=0.2", "langchain-core>=0.3"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance"]
+
+[project.entry-points."openwright.source_connectors"]
+langgraph = "openwright_langgraph:connector"
+
+# one-import integration: `openwright.instrument("langgraph")` (core >= 0.7)
+[project.entry-points."openwright.instrumentors"]
+langgraph = "openwright_langgraph:auto_instrument"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_langgraph"]

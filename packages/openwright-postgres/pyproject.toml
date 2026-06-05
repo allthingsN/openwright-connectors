@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-postgres"
+version = "0.4.0"
+description = "PostgreSQL ledger backend for OpenWright — durable, multi-writer evidence."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "postgres", "ledger", "evidence", "audit"]
+dependencies = ["openwright-core>=0.6,<0.8", "psycopg[binary]>=3.1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance"]
+
+[project.entry-points."openwright.ledger_backends"]
+postgres = "openwright_postgres:backend"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_postgres"]

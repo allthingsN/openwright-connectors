@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-langfuse"
+version = "0.4.0"
+description = "Langfuse forwarder for OpenWright — co-ingest + openwright:* verdict back-link + evals-as-evidence."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "langfuse", "observability", "forwarder", "evidence"]
+dependencies = ["openwright-core>=0.6,<0.8", "httpx>=0.27"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance"]
+
+[project.entry-points."openwright.forwarders"]
+langfuse = "openwright_langfuse:forwarder"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_langfuse"]

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openwright-s3"
+version = "0.4.0"
+description = "S3 checkpoint store for OpenWright — Object-Lock/WORM chain-of-custody."
+requires-python = ">=3.10,<3.15"
+license = { text = "Apache-2.0" }
+readme = "README.md"
+keywords = ["openwright", "s3", "worm", "object-lock", "checkpoint", "evidence"]
+dependencies = ["openwright-core>=0.6,<0.8", "boto3>=1.34"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "openwright-conformance", "moto[s3]>=5.0"]
+
+[project.entry-points."openwright.checkpoint_stores"]
+s3 = "openwright_s3:store"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openwright_s3"]

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+
+# generated evidence / demo artifacts
+*.pem
+*.pem.pub
+openwright-out/
+*-ledger/
+out/
+
+# node / OS
+node_modules/
+.DS_Store

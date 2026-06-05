@@ -1,0 +1,7 @@
+# Default owners for the connectors monorepo.
+* @allthingsN
+
+# Crypto-adjacent surfaces deserve extra eyes (storage backends touch the ledger).
+/packages/openwright-postgres/ @allthingsN
+/packages/openwright-s3/        @allthingsN
+/conformance/                   @allthingsN
