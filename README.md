@@ -6,7 +6,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://github.com/allthingsN/openwright-connectors/actions"><img src="https://github.com/allthingsN/openwright-connectors/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://codecov.io/gh/allthingsN/openwright-connectors"><img src="https://codecov.io/gh/allthingsN/openwright-connectors/graph/badge.svg" alt="coverage"></a>
+  <a href="https://github.com/allthingsN/openwright-connectors/actions"><img src="https://raw.githubusercontent.com/allthingsN/openwright-connectors/badges/coverage.svg" alt="coverage"></a>
   <a href="https://github.com/allthingsN/openwright"><img src="https://img.shields.io/badge/core-openwright--core%20%E2%89%A50.6-16a34a" alt="core"></a>
 </p>
 

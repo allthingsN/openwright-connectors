@@ -1,6 +1,12 @@
 name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore: [badges]   # 'badges' holds only the generated coverage SVG
+  pull_request:
+
+permissions:
+  contents: read   # least privilege; the coverage-badge job opts into write below
 
 jobs:
   lint:
@@ -33,25 +39,12 @@ jobs:
         with: { python-version: "3.12" }
       - name: Install core (${{ matrix.core }}), conformance harness, and the package
         run: |
-          python -m pip install --upgrade pip pytest-cov
+          python -m pip install --upgrade pip
           pip install "openwright-core${{ matrix.core }}"
           pip install ./conformance
-          pip install -e "./packages/${{ matrix.package }}[test]"   # -e so coverage maps to src/
-      - name: Conformance + package tests (+ coverage)
-        run: pytest "packages/${{ matrix.package }}/tests" --cov="packages/${{ matrix.package }}/src" --cov-report=xml --cov-report=term-missing -q
-      - name: Publish coverage to Codecov
-        if: matrix.core == '>=0.6,<0.8'
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.xml
-          flags: ${{ matrix.package }}
-          fail_ci_if_error: false
-      - name: Upload coverage artifact
-        if: matrix.core == '>=0.6,<0.8'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.package }}
-          path: coverage.xml
+          pip install "./packages/${{ matrix.package }}[test]"
+      - name: Conformance + package tests
+        run: pytest "packages/${{ matrix.package }}/tests" -q
 
   # REPO-4: decoupling guard — a connector must not import another connector.
   decoupling-guard:
@@ -65,3 +58,32 @@ jobs:
           pip install "openwright-core>=0.6,<0.8" import-linter ./conformance
           for p in packages/*; do pip install "$p"; done  # includes _template (openwright_template)
       - run: lint-imports
+
+  # Self-hosted combined coverage badge (no external service): one coverage run over
+  # all packages → an SVG published to an orphan 'badges' branch (README points at raw SVG).
+  coverage-badge:
+    needs: [test, decoupling-guard]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Combined coverage over all packages
+        run: |
+          python -m pip install --upgrade pip pytest pytest-cov "genbadge[coverage]"
+          pip install "openwright-core>=0.6,<0.8" ./conformance
+          for p in packages/*; do pip install -e "$p[test]" || pip install -e "$p"; done
+          pytest packages/*/tests --cov=packages --cov-report=xml --cov-report=term-missing -q
+          coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+          genbadge coverage -i coverage.xml -o coverage.svg
+      - name: Publish badge to 'badges' branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan badges
+          git add -f coverage.svg
+          git commit -m "ci: update coverage badge"
+          git push -f origin badges
